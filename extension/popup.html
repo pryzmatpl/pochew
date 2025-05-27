@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Read It Later</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      width: 350px;
+      min-height: 400px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f8fafc;
+      color: #334155;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .header h1 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .header p {
+      font-size: 12px;
+      opacity: 0.9;
+    }
+
+    .content {
+      padding: 20px;
+    }
+
+    .auth-section {
+      text-align: center;
+      padding: 20px 0;
+    }
+
+    .auth-section h2 {
+      font-size: 16px;
+      margin-bottom: 12px;
+      color: #475569;
+    }
+
+    .auth-section p {
+      font-size: 14px;
+      color: #64748b;
+      margin-bottom: 20px;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      width: 100%;
+      margin-bottom: 8px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-secondary {
+      background: #e2e8f0;
+      color: #475569;
+    }
+
+    .btn-secondary:hover {
+      background: #cbd5e1;
+    }
+
+    .btn-success {
+      background: #10b981;
+      color: white;
+    }
+
+    .btn-success:hover {
+      background: #059669;
+      transform: translateY(-1px);
+    }
+
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+
+    .page-info {
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .page-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #1e293b;
+      margin-bottom: 8px;
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .page-url {
+      font-size: 12px;
+      color: #64748b;
+      word-break: break-all;
+      display: -webkit-box;
+      -webkit-line-clamp: 1;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .tags-input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 14px;
+      margin-bottom: 12px;
+      background: white;
+    }
+
+    .tags-input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .status {
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 14px;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+
+    .status.success {
+      background: #dcfce7;
+      color: #166534;
+      border: 1px solid #bbf7d0;
+    }
+
+    .status.error {
+      background: #fef2f2;
+      color: #dc2626;
+      border: 1px solid #fecaca;
+    }
+
+    .status.loading {
+      background: #eff6ff;
+      color: #2563eb;
+      border: 1px solid #dbeafe;
+    }
+
+    .user-info {
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .user-email {
+      font-size: 14px;
+      color: #475569;
+      font-weight: 500;
+    }
+
+    .logout-btn {
+      font-size: 12px;
+      color: #64748b;
+      background: none;
+      border: none;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+
+    .logout-btn:hover {
+      color: #dc2626;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .loading-spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid #ffffff;
+      border-radius: 50%;
+      border-top-color: transparent;
+      animation: spin 1s ease-in-out infinite;
+      margin-right: 8px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .quick-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .quick-action {
+      padding: 8px 12px;
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 12px;
+      color: #64748b;
+      text-decoration: none;
+      text-align: center;
+      transition: all 0.2s ease;
+    }
+
+    .quick-action:hover {
+      background: #f1f5f9;
+      border-color: #cbd5e1;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Read It Later</h1>
+    <p>Save articles for offline reading</p>
+  </div>
+
+  <div class="content">
+    <!-- Authentication Section -->
+    <div id="auth-section" class="auth-section">
+      <h2>Welcome!</h2>
+      <p>Please log in to save articles to your reading list.</p>
+      <button id="login-btn" class="btn btn-primary">
+        Log In to Read It Later
+      </button>
+    </div>
+
+    <!-- Main Section (when authenticated) -->
+    <div id="main-section" class="hidden">
+      <!-- User Info -->
+      <div id="user-info" class="user-info">
+        <span id="user-email" class="user-email"></span>
+        <button id="logout-btn" class="logout-btn">Logout</button>
+      </div>
+
+      <!-- Status Messages -->
+      <div id="status" class="hidden"></div>
+
+      <!-- Current Page Info -->
+      <div id="page-info" class="page-info">
+        <div id="page-title" class="page-title">Loading page information...</div>
+        <div id="page-url" class="page-url"></div>
+      </div>
+
+      <!-- Tags Input -->
+      <input 
+        type="text" 
+        id="tags-input" 
+        class="tags-input" 
+        placeholder="Add tags (comma separated)"
+      >
+
+      <!-- Save Button -->
+      <button id="save-btn" class="btn btn-success">
+        <span id="save-text">Save Article</span>
+      </button>
+
+      <!-- Quick Actions -->
+      <div class="quick-actions">
+        <a href="http://localhost:8080/dashboard" target="_blank" class="quick-action">
+          📚 View Library
+        </a>
+        <a href="http://localhost:8080/settings" target="_blank" class="quick-action">
+          ⚙️ Settings
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html> 

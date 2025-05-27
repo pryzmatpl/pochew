@@ -1,0 +1,155 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: readitlater-db
+    environment:
+      POSTGRES_DB: ${DB_NAME:-readitlater}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/migrations:/docker-entrypoint-initdb.d
+    networks:
+      - readitlater-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    security_opt:
+      - no-new-privileges:true
+
+  # Redis for session storage and caching
+  redis:
+    image: redis:7-alpine
+    container_name: readitlater-redis
+    volumes:
+      - redis_data:/data
+    networks:
+      - readitlater-network
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-}
+    security_opt:
+      - no-new-privileges:true
+
+  # Golang Backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      args:
+        - GO_VERSION=1.21
+    container_name: readitlater-backend
+    environment:
+      - GO_ENV=production
+      - DATABASE_URL=postgres://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_NAME:-readitlater}?sslmode=disable
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-}@redis:6379
+      - JWT_SECRET=${JWT_SECRET}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+      - LOCAL_STORAGE_PATH=/app/data/storage
+      - FRONTEND_URL=${FRONTEND_URL}
+      - DEBUG=false
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+    volumes:
+      - ./data/storage:/app/data/storage
+      - ./logs:/app/logs
+    networks:
+      - readitlater-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+    user: "1000:1000"
+
+  # Vue.js Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - NODE_VERSION=18
+        - VITE_API_URL=${BACKEND_URL}
+        - VITE_APP_NAME=Read-It-Later
+    container_name: readitlater-frontend
+    networks:
+      - readitlater-network
+    depends_on:
+      - backend
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/cache/nginx
+      - /var/run
+    user: "1000:1000"
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: readitlater-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/prod.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - ./data/storage:/var/www/storage:ro
+    networks:
+      - readitlater-network
+    depends_on:
+      - frontend
+      - backend
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+
+  # Backup Service (Optional)
+  backup:
+    build:
+      context: ./scripts/backup
+      dockerfile: Dockerfile
+    container_name: readitlater-backup
+    environment:
+      - DATABASE_URL=postgres://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_NAME:-readitlater}?sslmode=disable
+      - BACKUP_SCHEDULE=${BACKUP_SCHEDULE:-0 2 * * *}
+      - BACKUP_RETENTION=${BACKUP_RETENTION:-7}
+      - CLOUD_STORAGE_PROVIDER=${CLOUD_STORAGE_PROVIDER:-local}
+      - CLOUD_ACCESS_KEY=${CLOUD_ACCESS_KEY}
+      - CLOUD_SECRET_KEY=${CLOUD_SECRET_KEY}
+      - CLOUD_STORAGE_BUCKET=${CLOUD_STORAGE_BUCKET}
+    volumes:
+      - ./data/backups:/app/backups
+      - ./data/storage:/app/storage:ro
+    networks:
+      - readitlater-network
+    depends_on:
+      - postgres
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  readitlater-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16 

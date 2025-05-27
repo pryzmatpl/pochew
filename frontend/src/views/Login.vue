@@ -55,9 +55,9 @@
         <div class="text-center">
           <p class="text-sm text-gray-600">
             Don't have an account?
-            <a href="#" class="font-medium text-blue-600 hover:text-blue-500">
+            <router-link to="/signup" class="font-medium text-blue-600 hover:text-blue-500">
               Sign up
-            </a>
+            </router-link>
           </p>
         </div>
       </form>

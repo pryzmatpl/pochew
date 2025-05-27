@@ -39,7 +39,7 @@ api.interceptors.response.use(
       const authStore = useAuthStore()
       const refreshResult = await authStore.refreshToken()
       
-      if (refreshResult.success) {
+      if (refreshResult) {
         // Retry original request with new token
         const token = localStorage.getItem('token')
         originalRequest.headers.Authorization = `Bearer ${token}`

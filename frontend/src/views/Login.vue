@@ -34,12 +34,21 @@
           </div>
         </div>
 
+        <!-- Error message -->
+        <div v-if="error" class="rounded-md bg-red-50 p-4">
+          <div class="text-sm text-red-700">
+            {{ error }}
+          </div>
+        </div>
+
         <div>
           <button
             type="submit"
-            class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            :disabled="isLoading"
+            class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Sign in
+            <span v-if="isLoading">Signing in...</span>
+            <span v-else>Sign in</span>
           </button>
         </div>
 
@@ -59,20 +68,38 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
+const authStore = useAuthStore()
 
 const form = ref({
   email: '',
   password: ''
 })
 
+const isLoading = ref(false)
+const error = ref('')
+
 const handleLogin = async () => {
-  // Placeholder login logic
-  console.log('Login attempt:', form.value)
+  if (isLoading.value) return
   
-  // For now, just simulate a successful login
-  localStorage.setItem('token', 'placeholder-token')
-  router.push('/dashboard')
+  isLoading.value = true
+  error.value = ''
+  
+  try {
+    const result = await authStore.login(form.value)
+    
+    if (result.success) {
+      router.push('/dashboard')
+    } else {
+      error.value = result.error || 'Login failed'
+    }
+  } catch (err) {
+    error.value = 'An unexpected error occurred'
+    console.error('Login error:', err)
+  } finally {
+    isLoading.value = false
+  }
 }
 </script> 
